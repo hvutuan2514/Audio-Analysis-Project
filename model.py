@@ -14,21 +14,24 @@ class AudioData:
        self.sample_rate = None
        self.duration = None
 
+    # Loads audio data using librosa
    def load_data(self):
        self.audio_data, self.sample_rate = librosa.load(self.file_path, sr=None)
        self.duration = librosa.get_duration(y=self.audio_data, sr=self.sample_rate)
 
+    # Cleans audio data by removing meta data and handling multi-channel
    def clean_data(self):
-       self.audio_data, _ = librosa.load(self.file_path, sr=None,
-                                         mono=True)  # removes meta data & handles multi-channel - hannah
+       self.audio_data, _ = librosa.load(self.file_path, sr=None, mono=True)
 
-   def format_data(self):  # Checks for wav and mp3, if not, convert to wav - hannah
+    # Checks file format for wav or mp3, if not, convert to wav
+   def format_data(self):
        if not self.file_path.lower().endswith(('.wav', '.mp3')):
            wav_file_path = os.path.splitext(self.file_path)[0] + '.wav'
            write(wav_file_path, self.sample_rate, (self.audio_data * 32767).astype(np.int16))
            self.audio_data, _ = librosa.load(wav_file_path, sr=None, mono=True)
            self.file_path = wav_file_path
 
+    # Calculate greatest resonant frequency
    def calculate_resonant_freq(self):
        frequencies, power = welch(self.audio_data, fs=self.sample_rate)
        resonant_freq = frequencies[np.argmax(power)]
@@ -54,15 +57,12 @@ class AudioData:
 
 file_path_global = "/Users/hanna/PycharmProjects/pythonProject/projectFiles/PolyHallClap_10mM.wav"
 
-
 audio_instance = AudioData(file_path_global)
-
 
 audio_instance.load_data()
 
 
-
-
+# Calculate summary statistics
 def calculate_summary_statistics(data):
    mean = np.mean(data)
    median = np.median(data)
@@ -72,22 +72,18 @@ def calculate_summary_statistics(data):
    return mean, median, mode, std_dev, variance
 
 
-
-
+# Peforms FFT within a specified frequency range
 def perform_frequency_range_analysis(signal, fs, frequency_range):
    # perform FFT on the signal
    n = len(signal)
    freqs = fftfreq(n, 1 / fs)
    fft_vals = fft(signal)
 
-
    # define frequency range indices
    min_freq, max_freq = frequency_range
    freq_range_indices = np.where((freqs >= min_freq) & (freqs <= max_freq))[0]
 
-
    # extract FFT values within the specified frequency range
    freq_range_fft = fft_vals[freq_range_indices]
-
 
    return freq_range_fft, freqs[freq_range_indices]
