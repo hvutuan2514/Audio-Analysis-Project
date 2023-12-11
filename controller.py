@@ -4,58 +4,46 @@ import view
 
 
 class Controller:
-    def __init__(self, root):
-        self.root = root
-        self.view = view.View(self)
-        self.audio_instance = None
+   def __init__(self, root):
+       self.root = root
+       self.view = view.View(self)
+       self.audio_instance = None
 
-    def load_data(self):
-        file_path = filedialog.askopenfilename(filetypes=[("Audio files", "*.wav;*.mp3")])
-        if file_path:
-            try:
-                self.audio_instance = model.AudioData(file_path)  # create instance of AudioData
-                self.audio_instance.load_data()  # load audio data
-                resonant_freq = self.audio_instance.calculate_resonant_freq() # find resonant frequency
-                self.view.visualize_waveforms(resonant_freq)
+   def load_data(self):
+       file_path = filedialog.askopenfilename(filetypes=[("Audio files", "*.wav;*.mp3")])
+       if file_path:
+           try:
+               self.audio_instance = model.AudioData(file_path)
+               self.audio_instance.load_data()
+               self.view.display_file_name(self.audio_instance.file_path)
+               self.view.display_file_duration(self.audio_instance.file_path)
 
-            except Exception as e:
-                messagebox.showerror("Error", f"An error occurred while loading the audio file: {e}")
+               resonant_freq = self.audio_instance.calculate_resonant_freq
+               self.view.visualize_waveforms(resonant_freq)
 
-    def calculate_rt60(self):
-        if self.audio_instance:
-            # pass the calculated RT60 value to the view for display or processing or sumn
-            signal = self.audio_instance.audio_data
-            fs = self.audio_instance.sample_rate
+               # display plots of RT60 for each frequency
+               low_rt60, mid_rt60, high_rt60, difference = self.audio_instance.calculate_rt60()
+               self.view.display_plots(low_rt60, mid_rt60, high_rt60)
 
-            # calculate RT60 for low, mid, and high frequency ranges
-            low_rt60 = model.perform_frequency_range_analysis(signal, fs, (20, 500))
-            mid_rt60 = model.perform_frequency_range_analysis(signal, fs, (500, 2000))
-            high_rt60 = model.perform_frequency_range_analysis(signal, fs, (2000, 5000))
+               self.view.combine_plots(difference)
 
-            # display plots of RT60 for each frequency
-            self.view.display_plots(low_rt60, mid_rt60, high_rt60)
+           except Exception as e:
+               messagebox.showerror("Error", f"An error occurred while loading the audio file: {e}")
 
-            # calculate average RT60 time
-            average_rt60 = (low_rt60 + mid_rt60 + high_rt60) / 3
-            # calculate the difference from 0.5 seconds
-            difference = average_rt60 - 0.5
+   def clean_data(self):
+       if self.audio_instance:
+           try:
+               self.audio_instance.clean_data()
 
-            # display the difference in the GUI
-            self.view.combine_plots(difference)
+           except Exception as e:
+               messagebox.showerror("Error", f"An error occurred while cleaning the audio data: {e}")
 
-    # BOY! idk
-    def clean_data(self):
-        if self.audio_instance:
-            try:
-                self.audio_instance.clean_data()
-                # perform anything after cleaning data
-            except Exception as e:
-                messagebox.showerror("Error", f"An error occurred while cleaning the audio data: {e}")
 
-    def perform_analysis(self):
-        if self.audio_instance:
-            try:
-                messagebox.showinfo("Analysis",
-                                    "Analysis performed successfully.")
-            except Exception as e:
-                messagebox.showerror("Error", f"An error occurred during analysis: {e}")
+   def perform_analysis(self):
+       if self.audio_instance:
+           try:
+               messagebox.showinfo("Analysis",
+                                   "Analysis performed successfully.")
+
+           except Exception as e:
+               messagebox.showerror("Error", f"An error occurred during analysis: {e}")
